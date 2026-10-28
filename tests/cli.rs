@@ -37,11 +37,7 @@ fn multiplies_and_divides() {
 
 #[test]
 fn division_by_zero_prints_error() {
-    let output = calculator(&["5/0"]);
-    assert!(!output.status.success());
-    assert!(output.stdout.is_empty());
-    let stderr = String::from_utf8(output.stderr).unwrap();
-    assert!(stderr.contains("division by zero"), "stderr: {stderr}");
+    assert!(stderr_of("5/0").contains("division by zero"));
 }
 
 fn stdout_of(expression: &str) -> String {
@@ -51,6 +47,17 @@ fn stdout_of(expression: &str) -> String {
         "calculator failed on {expression:?}"
     );
     String::from_utf8(output.stdout).unwrap()
+}
+
+/// Runs a failing expression, checks that nothing was printed to stdout, and returns stderr.
+fn stderr_of(expression: &str) -> String {
+    let output = calculator(&[expression]);
+    assert!(
+        !output.status.success(),
+        "calculator succeeded on {expression:?}"
+    );
+    assert!(output.stdout.is_empty(), "{expression:?}");
+    String::from_utf8(output.stderr).unwrap()
 }
 
 #[test]
@@ -105,4 +112,29 @@ fn accepts_negative_operands() {
 fn accepts_exponent_notation_operands() {
     assert_eq!(stdout_of("1e-1+1"), "1.1\n");
     assert_eq!(stdout_of("2.5E+1-5"), "20\n");
+}
+
+#[test]
+fn exponentiates() {
+    let cases = [
+        ("2^3", "8\n"),
+        ("2^-1", "0.5\n"),
+        ("-2^2", "4\n"),
+        ("2.5^2", "6.25\n"),
+        ("4 ^ 0.5", "2\n"),
+    ];
+    for (expression, expected) in cases {
+        assert_eq!(stdout_of(expression), expected, "{expression}");
+    }
+}
+
+#[test]
+fn undefined_power_prints_error() {
+    for expression in ["0^-1", "-8^0.5"] {
+        let stderr = stderr_of(expression);
+        assert!(
+            stderr.contains("undefined"),
+            "{expression} stderr: {stderr}"
+        );
+    }
 }
