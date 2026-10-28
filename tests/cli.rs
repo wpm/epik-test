@@ -90,3 +90,19 @@ fn reports_error_for_malformed_expression() {
     assert!(!output.status.success());
     assert!(!output.stderr.is_empty());
 }
+
+#[test]
+fn accepts_negative_operands() {
+    assert_eq!(stdout_of("-2+5"), "3\n");
+    assert_eq!(stdout_of("-2-3"), "-5\n");
+    assert_eq!(stdout_of("3--2"), "5\n");
+    assert_eq!(stdout_of("3+-2"), "1\n");
+    assert_eq!(stdout_of("3*-2"), "-6\n");
+    assert_eq!(stdout_of("-6/-2"), "3\n");
+}
+
+#[test]
+fn accepts_exponent_notation_operands() {
+    assert_eq!(stdout_of("1e-1+1"), "1.1\n");
+    assert_eq!(stdout_of("2.5E+1-5"), "20\n");
+}
