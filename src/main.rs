@@ -1,15 +1,18 @@
 use std::process::ExitCode;
 
+use calculator::{evaluate, format_number};
+
 fn main() -> ExitCode {
     let expression = std::env::args().skip(1).collect::<Vec<_>>().join(" ");
     if expression.trim().is_empty() {
-        eprintln!("usage: calculator <expression>  (e.g. \"3*2\" or \"100/2\")");
+        eprintln!(
+            "usage: calculator <expression>  (e.g. \"3+2\", \"10-7\", \"3*2\", or \"100/2\")"
+        );
         return ExitCode::SUCCESS;
     }
-    match calculator::evaluate(&expression) {
+    match evaluate(&expression) {
         Ok(value) => {
-            // f64's Display omits the fractional part of integral values, so "6" not "6.0".
-            println!("{value}");
+            println!("{}", format_number(value));
             ExitCode::SUCCESS
         }
         Err(error) => {
