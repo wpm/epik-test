@@ -37,10 +37,7 @@ fn multiplies_and_divides() {
 
 #[test]
 fn division_by_zero_prints_error() {
-    let output = calculator(&["5/0"]);
-    assert!(!output.status.success());
-    assert!(output.stdout.is_empty());
-    let stderr = String::from_utf8(output.stderr).unwrap();
+    let stderr = stderr_of("5/0");
     assert!(stderr.contains("division by zero"), "stderr: {stderr}");
 }
 
@@ -51,6 +48,16 @@ fn stdout_of(expression: &str) -> String {
         "calculator failed on {expression:?}"
     );
     String::from_utf8(output.stdout).unwrap()
+}
+
+fn stderr_of(expression: &str) -> String {
+    let output = calculator(&[expression]);
+    assert!(
+        !output.status.success(),
+        "calculator succeeded on {expression:?}"
+    );
+    assert!(output.stdout.is_empty(), "stdout for {expression:?}");
+    String::from_utf8(output.stderr).unwrap()
 }
 
 #[test]
@@ -86,9 +93,7 @@ fn ignores_whitespace() {
 
 #[test]
 fn reports_error_for_malformed_expression() {
-    let output = calculator(&["3+"]);
-    assert!(!output.status.success());
-    assert!(!output.stderr.is_empty());
+    assert!(!stderr_of("3+").is_empty());
 }
 
 #[test]
@@ -105,4 +110,28 @@ fn accepts_negative_operands() {
 fn accepts_exponent_notation_operands() {
     assert_eq!(stdout_of("1e-1+1"), "1.1\n");
     assert_eq!(stdout_of("2.5E+1-5"), "20\n");
+}
+
+#[test]
+fn raises_to_a_power() {
+    assert_eq!(stdout_of("2^3"), "8\n");
+    assert_eq!(stdout_of("2^-1"), "0.5\n");
+    assert_eq!(stdout_of("2.5^2"), "6.25\n");
+    assert_eq!(stdout_of("4^0.5"), "2\n");
+    assert_eq!(stdout_of("-2^3"), "-8\n");
+    assert_eq!(stdout_of("2 ^ 10"), "1024\n");
+}
+
+#[test]
+fn non_finite_result_prints_error() {
+    for expression in [
+        "-4^0.5",
+        "0^-1",
+        "2^2000",
+        "1e308*10",
+        "1e308+1e308",
+        "1+inf",
+    ] {
+        assert!(!stderr_of(expression).is_empty(), "{expression}");
+    }
 }
