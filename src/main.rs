@@ -22,6 +22,7 @@ enum Operator {
     Subtract,
     Multiply,
     Divide,
+    Power,
 }
 
 impl Operator {
@@ -31,6 +32,7 @@ impl Operator {
             '-' => Some(Self::Subtract),
             '*' => Some(Self::Multiply),
             '/' => Some(Self::Divide),
+            '^' => Some(Self::Power),
             _ => None,
         }
     }
@@ -47,11 +49,12 @@ impl Operator {
                     Ok(left / right)
                 }
             }
+            Self::Power => Ok(left.powf(right)),
         }
     }
 }
 
-/// Evaluates a binary expression such as "3+2", "10-7", "3*2" or "100/2".
+/// Evaluates a binary expression such as "3+2", "10-7", "3*2", "100/2" or "2^3".
 fn evaluate(expression: &str) -> Result<f64, String> {
     let expression = expression.trim();
     // An operator character is the binary operator only when it directly follows
@@ -72,7 +75,11 @@ fn evaluate(expression: &str) -> Result<f64, String> {
         .ok_or_else(|| format!("unsupported expression: {expression}"))?;
     let left = parse_operand(&expression[..index])?;
     let right = parse_operand(&expression[index + 1..])?;
-    operator.apply(left, right)
+    let value = operator.apply(left, right)?;
+    if value.is_nan() {
+        return Err(format!("{expression} is not a real number"));
+    }
+    Ok(value)
 }
 
 fn parse_operand(text: &str) -> Result<f64, String> {
