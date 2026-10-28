@@ -18,6 +18,8 @@ fn main() -> ExitCode {
 
 #[derive(Clone, Copy)]
 enum Operator {
+    Add,
+    Subtract,
     Multiply,
     Divide,
 }
@@ -25,6 +27,8 @@ enum Operator {
 impl Operator {
     fn from_char(c: char) -> Option<Self> {
         match c {
+            '+' => Some(Self::Add),
+            '-' => Some(Self::Subtract),
             '*' => Some(Self::Multiply),
             '/' => Some(Self::Divide),
             _ => None,
@@ -33,6 +37,8 @@ impl Operator {
 
     fn apply(self, left: f64, right: f64) -> Result<f64, String> {
         match self {
+            Self::Add => Ok(left + right),
+            Self::Subtract => Ok(left - right),
             Self::Multiply => Ok(left * right),
             Self::Divide => {
                 if right == 0.0 {
@@ -45,13 +51,24 @@ impl Operator {
     }
 }
 
-/// Evaluates a binary expression such as "3*2" or "100/2".
+/// Evaluates a binary expression such as "3+2", "10-7", "3*2" or "100/2".
 fn evaluate(expression: &str) -> Result<f64, String> {
     let expression = expression.trim();
+    // An operator character is the binary operator only when it directly follows
+    // a digit or decimal point. Otherwise it is a sign: a leading sign, a sign on
+    // the right operand ("3*-2"), or an exponent sign ("1e-5").
+    let mut previous = None;
     let (index, operator) = expression
         .char_indices()
-        .skip(1) // a leading sign belongs to the left operand
-        .find_map(|(i, c)| Operator::from_char(c).map(|op| (i, op)))
+        .find_map(|(i, c)| {
+            let after_number = matches!(previous, Some(p) if p == '.' || char::is_ascii_digit(&p));
+            if !c.is_whitespace() {
+                previous = Some(c);
+            }
+            Operator::from_char(c)
+                .filter(|_| after_number)
+                .map(|op| (i, op))
+        })
         .ok_or_else(|| format!("unsupported expression: {expression}"))?;
     let left = parse_operand(&expression[..index])?;
     let right = parse_operand(&expression[index + 1..])?;
