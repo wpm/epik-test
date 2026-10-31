@@ -106,3 +106,11 @@ fn accepts_exponent_notation_operands() {
     assert_eq!(stdout_of("1e-1+1"), "1.1\n");
     assert_eq!(stdout_of("2.5E+1-5"), "20\n");
 }
+
+#[test]
+fn raises_to_a_power() {
+    assert_eq!(stdout_of("2^3"), "8\n");
+    assert_eq!(stdout_of("2^-1"), "0.5\n");
+    assert_eq!(stdout_of("4^0.5"), "2\n");
+    assert_eq!(stdout_of("-2^2"), "4\n");
+}
