@@ -106,3 +106,31 @@ fn accepts_exponent_notation_operands() {
     assert_eq!(stdout_of("1e-1+1"), "1.1\n");
     assert_eq!(stdout_of("2.5E+1-5"), "20\n");
 }
+
+#[test]
+fn raises_numbers_to_powers() {
+    for (expression, expected) in [
+        ("2^3", "8\n"),
+        ("2^-1", "0.5\n"),
+        ("9^0.5", "3\n"),
+        ("1.5^2", "2.25\n"),
+        ("-2^3", "-8\n"),
+        ("2^0", "1\n"),
+        (" 2 ^ +3 ", "8\n"),
+        ("2e1^2", "400\n"),
+    ] {
+        assert_eq!(stdout_of(expression), expected, "{expression}");
+    }
+}
+
+#[test]
+fn rejects_missing_power_operand() {
+    let output = calculator(&["2^"]);
+    assert!(!output.status.success());
+    assert!(output.stdout.is_empty());
+    assert!(
+        String::from_utf8(output.stderr)
+            .unwrap()
+            .contains("invalid number")
+    );
+}
