@@ -106,3 +106,30 @@ fn accepts_exponent_notation_operands() {
     assert_eq!(stdout_of("1e-1+1"), "1.1\n");
     assert_eq!(stdout_of("2.5E+1-5"), "20\n");
 }
+
+#[test]
+fn raises_to_a_power() {
+    assert_eq!(stdout_of("2^3"), "8\n");
+    assert_eq!(stdout_of("2^-1"), "0.5\n");
+    assert_eq!(stdout_of("-2^3"), "-8\n");
+    assert_eq!(stdout_of("2.5^2"), "6.25\n");
+    assert_eq!(stdout_of("4^0.5"), "2\n");
+    assert_eq!(stdout_of(" 2 ^ 10 "), "1024\n");
+}
+
+#[test]
+fn power_without_a_real_result_prints_error() {
+    for expression in ["-8^0.5", "0^-1"] {
+        let output = calculator(&[expression]);
+        assert!(
+            !output.status.success(),
+            "{expression} succeeded: {output:?}"
+        );
+        assert!(output.stdout.is_empty(), "{expression}");
+        let stderr = String::from_utf8(output.stderr).unwrap();
+        assert!(
+            stderr.contains("no real result"),
+            "{expression} stderr: {stderr}"
+        );
+    }
+}
